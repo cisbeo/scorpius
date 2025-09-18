@@ -25,7 +25,7 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
     };
 
     if (!process.env.OPENAI_API_KEY) {
-      throw new AIServiceError('OpenAI API key is not configured');
+      throw new AIServiceError('La clé API OpenAI n\'est pas configurée');
     }
   }
 
@@ -48,7 +48,7 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
 
       const assistantMessage = response.choices[0]?.message?.content;
       if (!assistantMessage) {
-        throw new AIServiceError('Empty response from OpenAI for summary generation');
+        throw new AIServiceError('Réponse vide d\'OpenAI pour la génération de résumé');
       }
 
       return assistantMessage.trim();
@@ -56,7 +56,7 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
       if (error instanceof AIServiceError) {
         throw error;
       }
-      throw new AIServiceError(`Summary generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new AIServiceError(`Échec de la génération de résumé: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -80,7 +80,7 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
 
       const assistantMessage = response.choices[0]?.message?.content;
       if (!assistantMessage) {
-        throw new AIServiceError('Empty response from OpenAI for eligibility extraction');
+        throw new AIServiceError('Réponse vide d\'OpenAI pour l\'extraction d\'éligibilité');
       }
 
       // Parse and validate the JSON response
@@ -88,18 +88,18 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
       
       // Expect format: { "eligibility": ["requirement 1", "requirement 2", ...] }
       if (!rawData.eligibility || !Array.isArray(rawData.eligibility)) {
-        throw new AIServiceError('Invalid eligibility format from AI service');
+        throw new AIServiceError('Format d\'éligibilité invalide du service IA');
       }
 
       return rawData.eligibility.filter((item: any) => typeof item === 'string' && item.trim().length > 0);
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new AIServiceError('Invalid JSON response from AI service for eligibility extraction');
+        throw new AIServiceError('Réponse JSON invalide du service IA pour l\'extraction d\'éligibilité');
       }
       if (error instanceof AIServiceError) {
         throw error;
       }
-      throw new AIServiceError(`Eligibility extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new AIServiceError(`Échec de l\'extraction d\'éligibilité: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -126,7 +126,7 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
 
       const assistantMessage = response.choices[0]?.message?.content;
       if (!assistantMessage) {
-        throw new AIServiceError('Empty response from OpenAI');
+        throw new AIServiceError('Réponse vide d\'OpenAI');
       }
 
       // Parse and validate the JSON response
@@ -136,118 +136,120 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
       return extractedData;
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new AIServiceError('Invalid JSON response from AI service');
+        throw new AIServiceError('Réponse JSON invalide du service IA');
       }
       if (error instanceof AIServiceError) {
         throw error;
       }
-      throw new AIServiceError(`Question extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new AIServiceError(`Échec de l\'extraction de questions: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
   /**
-   * Get the system prompt for RFP summary generation
+   * Obtenir le prompt système pour la génération de résumé d'appel d'offres
    */
   private getSummarySystemPrompt(): string {
     return `
-You are an expert at analyzing RFP (Request for Proposal) documents and creating concise, informative summaries.
+Vous êtes un expert en analyse de documents d'appels d'offres publics français et en création de résumés concis et informatifs.
 
-Your task is to read through the RFP document and create a comprehensive paragraph summary that captures:
-1. The purpose and scope of the project/procurement
-2. Key requirements and deliverables
-3. Important dates, deadlines, or timelines mentioned
-4. Any special qualifications or criteria for vendors
-5. The overall scale or nature of the work
+Votre tâche est de lire le document d'appel d'offres et de créer un résumé en paragraphe qui capture :
+1. L'objet et le périmètre du projet/marché public
+2. Les exigences clés et les livrables
+3. Les dates importantes, échéances ou calendriers mentionnés
+4. Les qualifications spéciales ou critères pour les candidats
+5. L'échelle globale ou la nature du travail
 
-Write a clear, professional summary in paragraph form (3-5 sentences) that would help someone quickly understand what this RFP is about and what the organization is seeking. Focus on the most important aspects that potential bidders would need to know.
+Rédigez un résumé clair et professionnel sous forme de paragraphe (3-5 phrases) qui aiderait quelqu'un à comprendre rapidement de quoi traite cet appel d'offres et ce que l'organisme recherche. Concentrez-vous sur les aspects les plus importants que les candidats potentiels auraient besoin de connaître.
 
-Do not include section numbers, question lists, or administrative details like submission instructions. Focus on the substance of what is being procured.
+N'incluez pas de numéros de section, de listes de questions ou de détails administratifs comme les instructions de soumission. Concentrez-vous sur la substance de ce qui est acheté.
     `.trim();
   }
 
   /**
-   * Get the system prompt for vendor eligibility extraction
+   * Obtenir le prompt système pour l'extraction de critères d'éligibilité
    */
   private getEligibilitySystemPrompt(): string {
     return `
-You are an expert at analyzing RFP (Request for Proposal) documents and extracting vendor eligibility requirements.
+Vous êtes un expert en analyse de documents d'appels d'offres publics français et en extraction de critères d'éligibilité des candidats.
 
-Your task is to read through the RFP document and identify all key eligibility criteria that vendors must meet to qualify for this proposal. Focus on extracting:
+Votre tâche est de lire le document d'appel d'offres et d'identifier tous les critères d'éligibilité clés que les candidats doivent respecter pour être qualifiés pour cette proposition. Concentrez-vous sur l'extraction de :
 
-1. Minimum experience requirements (years in business, project experience)
-2. Technical qualifications and certifications
-3. Financial requirements (bonding, insurance, revenue thresholds)
-4. Geographic restrictions or preferences
-5. Industry-specific licenses or accreditations
-6. Staff qualifications and expertise requirements
-7. Past performance criteria
-8. Legal and compliance requirements
-9. Size classifications (small business, minority-owned, etc.)
-10. Any other mandatory qualifications mentioned
+1. Exigences d'expérience minimale (années d'activité, expérience de projets)
+2. Qualifications techniques et certifications
+3. Exigences financières (cautionnement, assurance, seuils de chiffre d'affaires)
+4. Restrictions ou préférences géographiques
+5. Licences ou accréditations spécifiques au secteur
+6. Qualifications et expertise du personnel
+7. Critères de performance passée
+8. Exigences légales et de conformité
+9. Classifications de taille (PME, entreprise adaptée, etc.)
+10. Toute autre qualification obligatoire mentionnée
 
-Format your response as a JSON object with an "eligibility" array containing clear, concise bullet points. Each requirement should be a standalone statement that a vendor can easily evaluate against their own qualifications.
+Formatez votre réponse comme un objet JSON avec un tableau "eligibility" contenant des puces claires et concises. Chaque exigence doit être une déclaration autonome qu'un candidat peut facilement évaluer par rapport à ses propres qualifications.
 
-Example format:
+Format d'exemple :
 {
   "eligibility": [
-    "Minimum 5 years of experience in software development",
-    "Must hold current ISO 27001 certification",
-    "Annual revenue of at least $10 million",
-    "Licensed to operate in the State of California"
+    "Minimum 5 ans d'expérience en développement logiciel",
+    "Doit détenir une certification ISO 27001 en cours de validité",
+    "Chiffre d'affaires annuel d'au moins 10 millions d'euros",
+    "Autorisé à opérer en France"
   ]
 }
 
-Focus only on mandatory requirements, not preferences. If no clear eligibility criteria are found, return an empty array.
+Concentrez-vous uniquement sur les exigences obligatoires, pas sur les préférences. Si aucun critère d'éligibilité clair n'est trouvé, retournez un tableau vide.
     `.trim();
   }
 
   /**
-   * Get the system prompt for question extraction
+   * Obtenir le prompt système pour l'extraction de questions
    */
   private getSystemPrompt(): string {
     const timestamp = Date.now();
     return `
-You are an expert at analyzing RFP (Request for Proposal) documents and extracting structured information.
-Given a document that contains RFP questions, extract all sections and questions into a structured format.
+Vous êtes un expert en analyse de documents d'appels d'offres publics français et en extraction d'informations structurées.
+Étant donné un document qui contient des questions d'appel d'offres, extrayez toutes les sections et questions dans un format structuré.
 
-Carefully identify:
-1. Different sections (usually numbered like 1.1, 1.2, etc.)
-2. The questions within each section
-3. Any descriptive text that provides context for the section
+Identifiez soigneusement :
+1. Les différentes sections (généralement numérotées comme 1.1, 1.2, etc.)
+2. Les questions dans chaque section
+3. Tout texte descriptif qui fournit un contexte pour la section
 
-Format the output as a JSON object with the following structure:
+Formatez la sortie comme un objet JSON avec la structure suivante :
 {
   "sections": [
     {
       "id": "section_${timestamp}_1",
-      "title": "Section Title",
-      "description": "Optional description text for the section",
+      "title": "Titre de la Section",
+      "description": "Texte de description optionnel pour la section",
       "questions": [
         {
           "id": "q_${timestamp}_1_1",
-          "question": "The exact text of the question"
+          "question": "Le texte exact de la question"
         }
       ]
     }
   ]
 }
 
-Requirements:
-- Generate unique reference IDs using the format: q_${timestamp}_<section>_<question> for questions
-- Generate unique reference IDs using the format: section_${timestamp}_<number> for sections  
-- Preserve the exact text of questions
-- Include all questions found in the document
-- Group questions correctly under their sections
-- If a section has subsections, create separate sections for each subsection
-- The timestamp prefix (${timestamp}) ensures uniqueness across different document uploads
+Exigences :
+- Générez des IDs de référence uniques en utilisant le format : q_${timestamp}_<section>_<question> pour les questions
+- Générez des IDs de référence uniques en utilisant le format : section_${timestamp}_<numéro> pour les sections  
+- Préservez le texte exact des questions
+- Incluez toutes les questions trouvées dans le document
+- Groupez correctement les questions sous leurs sections
+- Si une section a des sous-sections, créez des sections séparées pour chaque sous-section
+- Le préfixe timestamp (${timestamp}) assure l'unicité entre différents téléchargements de documents
+
+Répondez UNIQUEMENT en JSON valide.
     `.trim();
   }
 
   /**
-   * Format the user prompt with context
+   * Formater le prompt utilisateur avec le contexte
    */
   private formatUserPrompt(content: string, documentName: string): string {
-    return `Document Name: ${documentName}\n\nDocument Content:\n${content}`;
+    return `Nom du Document: ${documentName}\n\nContenu du Document:\n${content}`;
   }
 }
 

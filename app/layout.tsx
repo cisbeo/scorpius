@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AutoRFP - AI-Powered RFP Response Solution",
-  description: "Automatically answer RFP questions with AI document agents powered by LlamaIndex",
+  title: "Antares Tender Assistant - Assistant IA pour Marchés Publics",
+  description: "Assistant intelligent pour l'analyse et la réponse aux appels d'offres publics français",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html lang="fr" suppressHydrationWarning={true}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

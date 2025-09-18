@@ -271,7 +271,7 @@ Return only valid JSON.`;
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert at analyzing RFP questions and determining optimal search strategies. Always respond with valid JSON only.' },
+          { role: 'system', content: 'Vous êtes un expert en analyse de questions d\'appels d\'offres et en détermination de stratégies de recherche optimales. Répondez toujours uniquement en JSON valide.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.1,
@@ -349,7 +349,7 @@ Return only valid JSON.`;
   }
 
   /**
-   * AI-powered coverage assessment
+   * Évaluation de couverture alimentée par l'IA
    */
   private assessCoverageWithAI(sourceCount: number, query: string): 'complete' | 'partial' | 'insufficient' {
     // More intelligent assessment based on query complexity and source count
@@ -362,7 +362,7 @@ Return only valid JSON.`;
   }
 
   /**
-   * Step 3: AI-powered information extraction
+   * Étape 3 : Extraction d'informations alimentée par l'IA
    */
   private async extractInformationWithAI(
     question: string,
@@ -374,7 +374,7 @@ Return only valid JSON.`;
     if (allSources.length === 0) {
       return {
         extractedFacts: [],
-        missingInformation: ['No relevant documents found'],
+        missingInformation: ['Aucun document pertinent trouvé'],
         conflictingInformation: []
       };
     }
@@ -384,42 +384,42 @@ Return only valid JSON.`;
       `=== Document ${index + 1}: ${source.title} ===\n${source.snippet}\n`
     ).join('\n');
 
-    const prompt = `You are an expert RFP analyst. Analyze the following documents to extract information relevant to this question:
+    const prompt = `Vous êtes un expert analyste d'appels d'offres publics français. Analysez les documents suivants pour extraire les informations pertinentes à cette question :
 
 QUESTION: "${question}"
 
-DOCUMENT CONTENT:
+CONTENU DES DOCUMENTS:
 ${documentContent}
 
-Your task is to intelligently extract and organize information that directly addresses the question. DO NOT just list document snippets. Instead, analyze and synthesize the content.
+Votre tâche est d'extraire et d'organiser intelligemment les informations qui répondent directement à la question. NE vous contentez PAS de lister des extraits de documents. Analysez et synthétisez plutôt le contenu.
 
-Return JSON with:
+Retournez un JSON avec :
 {
   "extractedFacts": [
     {
-      "fact": "Clear, concise statement of relevant information (not a raw document quote)",
-      "source": "Document name", 
+      "fact": "Déclaration claire et concise d'informations pertinentes (pas une citation brute de document)",
+      "source": "Nom du document", 
       "confidence": 0.8
     }
   ],
-  "missingInformation": ["List any gaps in information needed to fully answer the question"],
+  "missingInformation": ["Listez les lacunes d'informations nécessaires pour répondre complètement à la question"],
   "conflictingInformation": [
     {
-      "topic": "What the conflict is about",
+      "topic": "De quoi porte le conflit",
       "conflictingSources": ["Doc1", "Doc2"]
     }
   ]
 }
 
-IMPORTANT GUIDELINES:
-- Extract MEANINGFUL facts, not raw technical data dumps
-- Focus on information that directly answers the question
-- Synthesize and interpret technical details into understandable statements
-- If documents contain mostly irrelevant technical details, extract only what's useful
-- Confidence should reflect how well the fact answers the original question
-- Each fact should be a complete, standalone statement
+DIRECTIVES IMPORTANTES :
+- Extrayez des faits SIGNIFICATIFS, pas des décharges de données techniques brutes
+- Concentrez-vous sur les informations qui répondent directement à la question
+- Synthétisez et interprétez les détails techniques en déclarations compréhensibles
+- Si les documents contiennent principalement des détails techniques non pertinents, n'extrayez que ce qui est utile
+- La confiance doit refléter à quel point le fait répond à la question originale
+- Chaque fait doit être une déclaration complète et autonome
 
-Return only valid JSON.`;
+Retournez uniquement du JSON valide.`;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -427,7 +427,7 @@ Return only valid JSON.`;
         messages: [
           { 
             role: 'system', 
-            content: 'You are an expert RFP analyst who extracts meaningful, relevant information from documents. Focus on answering the specific question, not listing raw data. Always respond with valid JSON only.' 
+            content: 'Vous êtes un expert analyste d\'appels d\'offres publics français qui extrait des informations pertinentes et significatives des documents DCE, CCTP, CCP et BPU. Concentrez-vous sur la réponse à la question spécifique pour les marchés publics français, pas sur l\'énumération de données brutes. Répondez toujours uniquement en JSON valide.' 
           },
           { role: 'user', content: prompt }
         ],
@@ -451,34 +451,34 @@ Return only valid JSON.`;
 
       return result;
     } catch (error) {
-      console.error('AI information extraction failed:', error);
-      // Fallback to improved basic extraction
+      console.error('Échec de l\'extraction d\'informations par IA:', error);
+      // Repli vers une extraction de base améliorée
       return this.getImprovedBasicExtraction(allSources, question);
     }
   }
 
   /**
-   * Improved basic fallback information extraction
+   * Extraction d'informations de base améliorée de repli
    */
   private getImprovedBasicExtraction(sources: any[], question: string): InformationExtraction {
     const extractedFacts = sources
       .filter(source => source.snippet && source.snippet.length > 50)
       .slice(0, 5) // Limit to top 5 sources
       .map((source, index) => ({
-        fact: `Relevant information regarding ${question.split(' ').slice(0, 3).join(' ')}: ${source.snippet.substring(0, 150)}${source.snippet.length > 150 ? '...' : ''}`,
+        fact: `Information pertinente concernant ${question.split(' ').slice(0, 3).join(' ')}: ${source.snippet.substring(0, 150)}${source.snippet.length > 150 ? '...' : ''}`,
         source: source.title,
         confidence: Math.min(source.relevanceScore + 0.1, 0.9)
       }));
 
     return {
       extractedFacts,
-      missingInformation: sources.length < 3 ? ['Limited document coverage for comprehensive analysis'] : [],
+      missingInformation: sources.length < 3 ? ['Couverture documentaire limitée pour une analyse complète'] : [],
       conflictingInformation: []
     };
   }
 
   /**
-   * Step 4: AI-powered response synthesis
+   * Étape 4 : Synthèse de réponse alimentée par l'IA
    */
   private async synthesizeResponseWithAI(
     question: string,
@@ -493,11 +493,11 @@ Return only valid JSON.`;
     if (extraction.extractedFacts.length === 0) {
       console.log('No facts available, returning insufficient information response');
       return {
-        mainResponse: `Based on the available documentation, there is insufficient specific information to provide a comprehensive answer to: "${question}"\n\nTo fully address this question, additional documentation or clarification may be required.`,
+        mainResponse: `D'après la documentation disponible, il n'y a pas suffisamment d'informations spécifiques pour fournir une réponse complète à : "${question}"\n\nPour traiter pleinement cette question, une documentation supplémentaire ou des clarifications peuvent être nécessaires.`,
         confidence: 0.2,
         sources: [],
-        limitations: ['No relevant information found in provided documents'],
-        recommendations: ['Request additional technical documentation', 'Consult with subject matter experts', 'Clarify specific requirements']
+        limitations: ['Aucune information pertinente trouvée dans les documents fournis'],
+        recommendations: ['Demander une documentation technique supplémentaire', 'Consulter des experts du domaine', 'Clarifier les exigences spécifiques']
       };
     }
 
@@ -506,48 +506,48 @@ Return only valid JSON.`;
     ).join('\n');
 
     const contextInfo = `
-Question Complexity: ${analysis.complexity}
-Required Information Types: ${analysis.requiredInformation.join(', ')}
-Available Facts: ${extraction.extractedFacts.length}
-Missing Information: ${extraction.missingInformation.join(', ') || 'None identified'}
-Conflicting Information: ${extraction.conflictingInformation.length > 0 ? extraction.conflictingInformation.map(c => c.topic).join(', ') : 'None detected'}`;
+Complexité de la question: ${analysis.complexity}
+Types d'informations requises: ${analysis.requiredInformation.join(', ')}
+Faits disponibles: ${extraction.extractedFacts.length}
+Informations manquantes: ${extraction.missingInformation.join(', ') || 'Aucune identifiée'}
+Informations contradictoires: ${extraction.conflictingInformation.length > 0 ? extraction.conflictingInformation.map(c => c.topic).join(', ') : 'Aucune détectée'}`;
 
-    const prompt = `You are an expert RFP response writer. Create a professional, comprehensive response to this RFP question using the provided facts.
+    const prompt = `Vous êtes un expert en rédaction de réponses aux appels d'offres publics français. Créez une réponse professionnelle et complète à cette question d'appel d'offres en utilisant les faits fournis.
 
 QUESTION: "${question}"
 
-CONTEXT:${contextInfo}
+CONTEXTE:${contextInfo}
 
-AVAILABLE FACTS:
+FAITS DISPONIBLES:
 ${factsForAI}
 
-Create a professional RFP response that:
-1. Directly addresses the question asked
-2. Uses the available facts to provide specific, actionable information  
-3. Maintains a professional, confident tone
-4. Structures information logically with headings if appropriate
-5. Acknowledges any limitations transparently
-6. Provides concrete details rather than vague statements
+Créez une réponse professionnelle d'appel d'offres qui :
+1. Répond directement à la question posée
+2. Utilise les faits disponibles pour fournir des informations spécifiques et exploitables
+3. Maintient un ton professionnel et confiant
+4. Structure l'information de manière logique avec des titres si approprié
+5. Reconnaît toute limitation de manière transparente
+6. Fournit des détails concrets plutôt que des déclarations vagues
 
-Return JSON with:
+Retournez un JSON avec :
 {
-  "mainResponse": "Professional RFP response in markdown format with proper structure and headings",
+  "mainResponse": "Réponse professionnelle d'appel d'offres au format markdown avec structure et titres appropriés",
   "confidence": 0.85,
   "sources": [{"id": "1", "relevance": 0.9, "usedInResponse": true}],
-  "limitations": ["Specific limitations if any"],
-  "recommendations": ["Actionable next steps if needed"]
+  "limitations": ["Limitations spécifiques s'il y en a"],
+  "recommendations": ["Prochaines étapes exploitables si nécessaires"]
 }
 
-FORMATTING GUIDELINES:
-- Use markdown headers (##, ###) to structure sections
-- Include bullet points for lists
-- Bold important terms or requirements
-- Keep paragraphs focused and concise
-- End with next steps or recommendations if applicable
+DIRECTIVES DE FORMATAGE :
+- Utilisez des en-têtes markdown (##, ###) pour structurer les sections
+- Incluez des puces pour les listes
+- Mettez en gras les termes ou exigences importants
+- Gardez les paragraphes focalisés et concis
+- Terminez avec les prochaines étapes ou recommandations si applicable
 
-The response should read like a professional RFP section that could be directly included in a proposal document.
+La réponse doit se lire comme une section professionnelle d'appel d'offres qui pourrait être directement incluse dans un document de proposition.
 
-Return only valid JSON.`;
+Retournez uniquement du JSON valide.`;
 
     try {
       console.log('Calling OpenAI for response synthesis...');
@@ -558,7 +558,7 @@ Return only valid JSON.`;
         messages: [
           { 
             role: 'system', 
-            content: 'You are an expert RFP response writer who creates professional, structured responses that directly address client questions. Always respond with valid JSON only.' 
+            content: 'Vous êtes un expert en rédaction de réponses aux appels d\'offres publics français qui crée des réponses professionnelles et structurées répondant directement aux questions des clients pour les marchés publics. Répondez toujours uniquement en JSON valide.' 
           },
           { role: 'user', content: prompt }
         ],
@@ -568,8 +568,8 @@ Return only valid JSON.`;
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
-        console.error('No content in OpenAI response');
-        throw new Error('No response from AI');
+        console.error('Aucun contenu dans la réponse OpenAI');
+        throw new Error('Aucune réponse de l\'IA pour la synthèse');
       }
 
       console.log('OpenAI response received, parsing JSON...');
@@ -601,36 +601,36 @@ Return only valid JSON.`;
 
       return result;
     } catch (error: unknown) {
-      console.error('AI response synthesis failed:', error);
+      console.error('Échec de la synthèse de réponse par IA:', error);
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
+        console.error('Message d\'erreur:', error.message);
+        console.error('Stack d\'erreur:', error.stack);
       }
       
-      // Check if it's an API error vs parsing error
+      // Vérifier s'il s'agit d'une erreur d'API vs d'analyse
       if (error instanceof Error && error.message?.includes('JSON parse')) {
-        console.log('JSON parsing failed, trying fallback...');
+        console.log('Échec de l\'analyse JSON, essai de repli...');
       } else {
-        console.log('OpenAI API call failed, trying fallback...');
+        console.log('Échec de l\'appel API OpenAI, essai de repli...');
       }
       
-      // Fallback to improved synthesis
-      console.log('Using fallback synthesis method...');
+      // Repli vers une synthèse améliorée
+      console.log('Utilisation de la méthode de synthèse de repli...');
       return this.getImprovedResponseSynthesis(question, extraction);
     }
   }
 
   /**
-   * Improved basic fallback response synthesis
+   * Synthèse de réponse de base améliorée de repli
    */
   private getImprovedResponseSynthesis(question: string, extraction: InformationExtraction): ResponseSynthesis {
     if (extraction.extractedFacts.length === 0) {
       return {
-        mainResponse: `## Response to: ${question}\n\nBased on the available documentation, there is insufficient specific information to provide a comprehensive answer to this question.\n\n### Recommendations\n\n- Request additional technical documentation\n- Consult with subject matter experts\n- Clarify specific requirements`,
+        mainResponse: `## Réponse à : ${question}\n\nD'après la documentation disponible, il n'y a pas suffisamment d'informations spécifiques pour fournir une réponse complète à cette question.\n\n### Recommandations\n\n- Demander une documentation technique supplémentaire\n- Consulter des experts du domaine\n- Clarifier les exigences spécifiques`,
         confidence: 0.2,
         sources: [],
-        limitations: ['No relevant information found in provided documents'],
-        recommendations: ['Request additional technical documentation', 'Consult with subject matter experts']
+        limitations: ['Aucune information pertinente trouvée dans les documents fournis'],
+        recommendations: ['Demander une documentation technique supplémentaire', 'Consulter des experts du domaine']
       };
     }
 
@@ -638,8 +638,8 @@ Return only valid JSON.`;
     const facts = extraction.extractedFacts;
     const avgConfidence = facts.reduce((sum, fact) => sum + fact.confidence, 0) / facts.length;
     
-    let response = `## Response to: ${question}\n\n`;
-    response += `Based on the available documentation, the following information addresses your question:\n\n`;
+    let response = `## Réponse à : ${question}\n\n`;
+    response += `D'après la documentation disponible, les informations suivantes répondent à votre question :\n\n`;
     
     // Group facts by source if possible
     const factsBySource = facts.reduce((groups: any, fact) => {
@@ -652,7 +652,7 @@ Return only valid JSON.`;
     if (Object.keys(factsBySource).length > 1) {
       // Multiple sources - organize by source
       Object.entries(factsBySource).forEach(([source, sourceFacts]: [string, any]) => {
-        response += `### Information from ${source}\n\n`;
+        response += `### Informations de ${source}\n\n`;
         (sourceFacts as any[]).forEach(fact => {
           response += `- ${fact.fact}\n`;
         });
@@ -660,7 +660,7 @@ Return only valid JSON.`;
       });
     } else {
       // Single source or mixed - list all facts
-      response += `### Key Information\n\n`;
+      response += `### Informations clés\n\n`;
       facts.forEach(fact => {
         response += `- ${fact.fact}\n`;
       });
@@ -670,7 +670,7 @@ Return only valid JSON.`;
     // Add limitations if any
     if (extraction.missingInformation.length > 0) {
       response += `### Limitations\n\n`;
-      response += `Please note the following limitations in the available information:\n\n`;
+      response += `Veuillez noter les limitations suivantes dans les informations disponibles :\n\n`;
       extraction.missingInformation.forEach(limitation => {
         response += `- ${limitation}\n`;
       });
@@ -678,14 +678,14 @@ Return only valid JSON.`;
     }
 
     // Add next steps
-    response += `### Next Steps\n\n`;
+    response += `### Prochaines étapes\n\n`;
     if (extraction.missingInformation.length > 0) {
-      response += `To provide a more comprehensive response, consider:\n\n`;
-      response += `- Providing additional relevant documentation\n`;
-      response += `- Clarifying specific technical requirements\n`;
-      response += `- Consulting with technical subject matter experts\n`;
+      response += `Pour fournir une réponse plus complète, considérez :\n\n`;
+      response += `- Fournir une documentation supplémentaire pertinente\n`;
+      response += `- Clarifier les exigences techniques spécifiques\n`;
+      response += `- Consulter des experts techniques du domaine\n`;
     } else {
-      response += `Based on the available information, we can proceed with implementation planning and detailed technical specifications.\n`;
+      response += `D'après les informations disponibles, nous pouvons procéder à la planification de l'implémentation et aux spécifications techniques détaillées.\n`;
     }
 
     return {
@@ -698,13 +698,13 @@ Return only valid JSON.`;
       })),
       limitations: extraction.missingInformation,
       recommendations: extraction.missingInformation.length > 0 
-        ? ['Provide additional technical documentation', 'Clarify specific requirements']
-        : ['Proceed with detailed implementation planning']
+        ? ['Fournir une documentation technique supplémentaire', 'Clarifier les exigences spécifiques']
+        : ['Procéder à la planification détaillée de l\'implémentation']
     };
   }
 
   /**
-   * Step 5: AI-powered response validation
+   * Étape 5 : Validation de réponse alimentée par l'IA
    */
   private async validateResponseWithAI(
     question: string,

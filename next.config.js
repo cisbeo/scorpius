@@ -1,3 +1,5 @@
+const withNextIntl = require('next-intl/plugin')('./i18n.js');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Configure environment variables that will be available on both server and client side
@@ -14,4 +16,4 @@ const nextConfig = {
   reactStrictMode: true,
 }
 
-module.exports = nextConfig; 
+module.exports = withNextIntl(nextConfig); 

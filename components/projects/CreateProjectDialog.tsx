@@ -40,8 +40,8 @@ export function CreateProjectDialog({
     
     if (!name.trim()) {
       toast({
-        title: 'Error',
-        description: 'Project name is required',
+        title: 'Erreur',
+        description: 'Le nom du projet est requis',
         variant: 'destructive',
       });
       return;
@@ -68,8 +68,8 @@ export function CreateProjectDialog({
         const project = result.data; // Extract project from data property
         
         toast({
-          title: 'Success',
-          description: `${project.name} has been created`,
+          title: 'Succès',
+          description: 'Projet créé avec succès',
         });
         
         // Reset form
@@ -88,12 +88,12 @@ export function CreateProjectDialog({
         }
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create project');
+        throw new Error(error.error || 'Échec de la création du projet');
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create project',
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Erreur lors de la création du projet',
         variant: 'destructive',
       });
     } finally {
@@ -106,32 +106,32 @@ export function CreateProjectDialog({
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create project</DialogTitle>
+            <DialogTitle>Créer un projet</DialogTitle>
             <DialogDescription>
-              Create a new project in your organization.
+              Créer un nouveau projet dans votre organisation.
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nom</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="My Project"
+                placeholder="Mon Projet"
                 className="col-span-3"
                 required
               />
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="description">Description (optional)</Label>
+              <Label htmlFor="description">Description (optionnel)</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of your project"
+                placeholder="Brève description de votre projet"
                 className="col-span-3"
                 rows={3}
               />
@@ -145,13 +145,13 @@ export function CreateProjectDialog({
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              Annuler
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !name.trim()}
             >
-              {isSubmitting ? 'Creating...' : 'Create'}
+              {isSubmitting ? 'Création...' : 'Créer'}
             </Button>
           </DialogFooter>
         </form>

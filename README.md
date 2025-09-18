@@ -1,14 +1,14 @@
-# AutoRFP - AI-Powered RFP Response Platform
+# Scorpius - Assistant IA pour Appels d'Offres Publics Français
 
-AutoRFP is an intelligent platform that automates RFP (Request for Proposal) response generation using advanced AI. Built with Next.js 15 and powered by LlamaIndex, it helps organizations respond to RFPs 80% faster by automatically extracting questions from documents and generating contextual responses based on your knowledge base.
+Scorpius est un assistant intelligent spécialisé dans l'analyse et la réponse aux appels d'offres publics français pour Antares IT Services. Construit avec Next.js 15 et alimenté par LlamaIndex, il aide les organisations à répondre aux marchés publics français 80% plus rapidement en extrayant automatiquement les questions des documents DCE et en générant des réponses contextuelles.
 
-## ✨ Features
+## ✨ Fonctionnalités
 
-### 🤖 AI-Powered Document Processing
-- **Automatic Question Extraction**: Upload RFP documents and automatically extract structured questions
-- **Intelligent Response Generation**: Generate contextual responses using your organization's documents
-- **Multi-Step AI Analysis**: Advanced reasoning process that analyzes, searches, extracts, and synthesizes responses
-- **Document Understanding**: Supports Word, PDF, Excel, and PowerPoint files
+### 🤖 Traitement Documentaire IA Spécialisé
+- **Extraction Automatique de Questions**: Téléchargez des documents DCE et extrayez automatiquement les questions structurées
+- **Génération de Réponses Intelligentes**: Générez des réponses contextuelles pour les marchés publics français
+- **Analyse IA Multi-Étapes**: Processus de raisonnement avancé qui analyse, recherche, extrait et synthétise les réponses
+- **Compréhension Documentaire**: Support des DCE, CCTP, CCP, BPU (PDF, Word, Excel)
 
 ### 🏢 Organization Management
 - **Multi-Tenant Architecture**: Support for multiple organizations with role-based access

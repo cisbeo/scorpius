@@ -6,16 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Github, Lock, Mail } from 'lucide-react'
 import Link from 'next/link'
-
 export default function LoginPage() {
+  
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Left Column: Login Form */}
       <div className="flex flex-1 flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div>
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Welcome back</h2>
-            <p className="mt-2 text-sm text-gray-600">Sign in to your account or create a new one.</p>
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Bon retour</h2>
+            <p className="mt-2 text-sm text-gray-600">Connectez-vous à votre compte ou créez-en un nouveau.</p>
           </div>
 
           <div className="mt-8">
@@ -24,10 +24,10 @@ export default function LoginPage() {
 
   
 
-              <form action={signInWithMagicLink} method="POST" className="space-y-6">
+              <form action={signInWithMagicLink} className="space-y-6">
                 <div>
                   <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email address
+                    Email
                   </Label>
                   <div className="mt-1">
                     <Input
@@ -36,7 +36,7 @@ export default function LoginPage() {
                       type="email"
                       autoComplete="email"
                       required
-                      placeholder="you@example.com"
+                      placeholder="vous@exemple.com"
                       className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
@@ -48,13 +48,13 @@ export default function LoginPage() {
                     className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium"
                   >
                     <Mail className="mr-2 h-4 w-4" />
-                    Send Magic Link
+                    Envoyer le lien magique
                   </Button>
                 </div>
               </form>
               
               <p className="mt-4 text-center text-xs text-gray-500">
-                We'll email you a magic link for a password-free sign in.
+Un lien magique sera envoyé à votre adresse email
               </p>
 
             </div>
