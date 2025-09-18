@@ -1,8 +1,8 @@
-import OpenAI from 'openai';
-import { IAIQuestionExtractor, AIServiceConfig } from '@/lib/interfaces/ai-service';
-import { ExtractedQuestions, ExtractedQuestionsSchema } from '@/lib/validators/extract-questions';
 import { DEFAULT_LANGUAGE_MODEL } from '@/lib/constants';
 import { AIServiceError } from '@/lib/errors/api-errors';
+import { AIServiceConfig, IAIQuestionExtractor } from '@/lib/interfaces/ai-service';
+import { ExtractedQuestions, ExtractedQuestionsSchema } from '@/lib/validators/extract-questions';
+import OpenAI from 'openai';
 
 /**
  * OpenAI-powered question extraction service
@@ -130,9 +130,17 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
       }
 
       // Parse and validate the JSON response
-      const rawData = JSON.parse(assistantMessage);
+      console.log("Raw AI response:", assistantMessage);
+      
+      let rawData;
+      try {
+        rawData = JSON.parse(assistantMessage);
+      } catch (parseError) {
+        console.error("JSON Parse Error. Raw response:", assistantMessage);
+        throw new AIServiceError('Réponse JSON invalide du service IA');
+      }
+      
       const extractedData = ExtractedQuestionsSchema.parse(rawData);
-
       return extractedData;
     } catch (error) {
       if (error instanceof SyntaxError) {
@@ -202,47 +210,69 @@ Concentrez-vous uniquement sur les exigences obligatoires, pas sur les préfére
   }
 
   /**
-   * Obtenir le prompt système pour l'extraction de questions
+   * Prompt système spécialisé pour l'extraction d'exigences des DCE français
+   * 
+   * APPROCHE : Extraire les EXIGENCES/SPÉCIFICATIONS du DCE et les transformer
+   * en questions actionnables pour un bid manager
    */
   private getSystemPrompt(): string {
     const timestamp = Date.now();
-    return `
-Vous êtes un expert en analyse de documents d'appels d'offres publics français et en extraction d'informations structurées.
-Étant donné un document qui contient des questions d'appel d'offres, extrayez toutes les sections et questions dans un format structuré.
+    return `Vous êtes un expert en analyse de Dossiers de Consultation des Entreprises (DCE) français.
 
-Identifiez soigneusement :
-1. Les différentes sections (généralement numérotées comme 1.1, 1.2, etc.)
-2. Les questions dans chaque section
-3. Tout texte descriptif qui fournit un contexte pour la section
+Votre mission : Extraire les EXIGENCES, SPÉCIFICATIONS et CONTRAINTES du document DCE et les transformer en questions actionnables pour un bid manager.
 
-Formatez la sortie comme un objet JSON avec la structure suivante :
+CONTEXTE DCE FRANÇAIS :
+Les DCE contiennent des exigences explicites (pas des questions) réparties dans :
+- CCTP : Spécifications techniques, performances, normes
+- CCP/CCAP : Conditions contractuelles, délais, garanties  
+- BPU : Décomposition des prix, prestations
+- RC : Critères d'attribution, modalités de candidature
+
+MÉTHODE D'EXTRACTION :
+1. Identifiez chaque EXIGENCE spécifique dans le document
+2. Transformez chaque exigence en QUESTION pour bid manager
+3. Conservez tous les détails techniques (chiffres, normes, délais)
+
+RÈGLES DE TRANSFORMATION :
+- Exigence technique → "Quelle solution technique pour [exigence] ?"
+- Performance requise → "Comment garantir [performance] ?"
+- Délai imposé → "Pouvons-nous respecter [délai] ?"
+- Certification obligatoire → "Détenons-nous [certification] ?"
+- Référence demandée → "Avons-nous des références [type] ?"
+
+CATÉGORIES D'EXIGENCES À EXTRAIRE :
+1. Exigences techniques (technologies, architectures, performances)
+2. Exigences de sécurité (certifications, habilitations, normes)
+3. Exigences contractuelles (délais, garanties, responsabilités)
+4. Exigences organisationnelles (équipes, méthodologie, reporting)
+5. Critères d'évaluation (pondération, références, seuils)
+6. Contraintes d'exécution (planning, lieux, modalités)
+
+CONSIGNES :
+- Extrayez 15-25 exigences détaillées du document
+- Transformez chaque exigence en question précise
+- Préservez tous les chiffres, pourcentages, dates, normes exactes
+- Distinguez les obligations des recommandations
+- Regroupez par thématique logique
+
+FORMAT DE RÉPONSE JSON :
 {
   "sections": [
     {
       "id": "section_${timestamp}_1",
-      "title": "Titre de la Section",
-      "description": "Texte de description optionnel pour la section",
+      "title": "Exigences techniques",
+      "description": "Questions liées aux spécifications techniques du DCE",
       "questions": [
         {
           "id": "q_${timestamp}_1_1",
-          "question": "Le texte exact de la question"
+          "question": "Quelle architecture réseau 10 Gbps minimum devons-nous proposer ?"
         }
       ]
     }
   ]
 }
 
-Exigences :
-- Générez des IDs de référence uniques en utilisant le format : q_${timestamp}_<section>_<question> pour les questions
-- Générez des IDs de référence uniques en utilisant le format : section_${timestamp}_<numéro> pour les sections  
-- Préservez le texte exact des questions
-- Incluez toutes les questions trouvées dans le document
-- Groupez correctement les questions sous leurs sections
-- Si une section a des sous-sections, créez des sections séparées pour chaque sous-section
-- Le préfixe timestamp (${timestamp}) assure l'unicité entre différents téléchargements de documents
-
-Répondez UNIQUEMENT en JSON valide.
-    `.trim();
+Répondez UNIQUEMENT avec du JSON valide, sans texte avant ou après.`.trim();
   }
 
   /**

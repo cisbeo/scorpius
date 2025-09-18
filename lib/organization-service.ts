@@ -193,12 +193,21 @@ export const organizationService = {
   },
 
   async updateMemberRole(organizationId: string, userId: string, role: string) {
+    // Find the record first, then update by id
+    const orgUser = await db.organizationUser.findFirst({
+      where: {
+        userId,
+        organizationId,
+      },
+    });
+
+    if (!orgUser) {
+      throw new Error('Organization member not found');
+    }
+
     return db.organizationUser.update({
       where: {
-        userId_organizationId: {
-          userId,
-          organizationId,
-        },
+        id: orgUser.id,
       },
       data: {
         role,
@@ -207,12 +216,21 @@ export const organizationService = {
   },
 
   async removeMember(organizationId: string, userId: string) {
+    // Find the record first, then delete by id
+    const orgUser = await db.organizationUser.findFirst({
+      where: {
+        userId,
+        organizationId,
+      },
+    });
+
+    if (!orgUser) {
+      throw new Error('Organization member not found');
+    }
+
     return db.organizationUser.delete({
       where: {
-        userId_organizationId: {
-          userId,
-          organizationId,
-        },
+        id: orgUser.id,
       },
     });
   },
@@ -293,12 +311,10 @@ export const organizationService = {
   },
 
   async getUserOrganizationRole(userId: string, organizationId: string) {
-    const orgUser = await db.organizationUser.findUnique({
+    const orgUser = await db.organizationUser.findFirst({
       where: {
-        userId_organizationId: {
-          userId,
-          organizationId,
-        },
+        userId,
+        organizationId,
       },
     });
 
@@ -306,12 +322,10 @@ export const organizationService = {
   },
 
   async isUserOrganizationMember(userId: string, organizationId: string) {
-    const orgUser = await db.organizationUser.findUnique({
+    const orgUser = await db.organizationUser.findFirst({
       where: {
-        userId_organizationId: {
-          userId,
-          organizationId,
-        },
+        userId,
+        organizationId,
       },
     });
 
