@@ -833,20 +833,32 @@ COMPLEXITY_CALIBRATION_FACTOR=1.2        # Facteur calibration
 HISTORICAL_DATA_RETENTION_YEARS=5        # Rétention données
 ```
 
-### **Monitoring et Observabilité**
+### **Monitoring Multi-IA et Observabilité**
 ```typescript
-// lib/monitoring/tender-metrics.ts
-export const tenderMetrics = {
-  // Performance
-  dceParsingTime: histogram('dce_parsing_duration_seconds'),
-  complexityCalculation: histogram('complexity_calculation_duration_seconds'),
+// lib/monitoring/ai-metrics.ts
+export const aiMetrics = {
+  // Performance IA
+  claudeResponseTime: histogram('claude_response_duration_seconds'),
+  voyageEmbeddingTime: histogram('voyage_embedding_duration_seconds'),
+  openaiResponseTime: histogram('openai_response_duration_seconds'),
+  aiRouterDecisionTime: histogram('ai_router_decision_duration_seconds'),
+  
+  // Coûts et Usage
+  claudeTokensUsed: counter('claude_tokens_used_total'),
+  voyageTokensUsed: counter('voyage_tokens_used_total'),
+  openaiTokensUsed: counter('openai_tokens_used_total'),
+  totalAiCosts: gauge('total_ai_costs_euros'),
+  
+  // Quality et Fallback
+  aiModelAccuracy: gauge('ai_model_accuracy_percentage'),
+  fallbackActivations: counter('ai_fallback_activations_total'),
+  frenchTerminologyScore: gauge('french_terminology_accuracy'),
   
   // Business
+  dceParsingTime: histogram('dce_parsing_duration_seconds'),
+  complexityCalculation: histogram('complexity_calculation_duration_seconds'),
   tenderCreated: counter('tenders_created_total'),
   parsingErrors: counter('parsing_errors_total'),
-  
-  // Quality
-  parsingAccuracy: gauge('parsing_accuracy_percentage'),
   userSatisfaction: gauge('user_satisfaction_score')
 };
 ```

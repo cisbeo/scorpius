@@ -139,6 +139,11 @@ function AppSidebar() {
           url: `/projects/${projectId}/documents`,
           icon: FileText,
         },
+        {
+          title: "Documents_deprecated",
+          url: `/projects/${projectId}/documents-deprecated`,
+          icon: FileText,
+        },
       ],
     },
   ];

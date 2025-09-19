@@ -39,7 +39,7 @@ export function IndexSelector({
             <div>
               <p className="font-medium text-amber-800">No Project Indexes Configured</p>
               <p className="text-sm text-amber-700">
-                This project has no document indexes configured. Go to the project's Documents tab to select indexes from your organization's LlamaCloud connection.
+                This project has no document indexes configured. Go to the project's Documents_deprecated tab to select indexes from your organization's LlamaCloud connection.
               </p>
             </div>
           </div>
@@ -57,7 +57,7 @@ export function IndexSelector({
             <div>
               <p className="font-medium text-amber-800">No Project Indexes Configured</p>
               <p className="text-sm text-amber-700">
-                This project has no document indexes configured. Go to the project's Documents tab to select indexes from your organization's LlamaCloud connection.
+                This project has no document indexes configured. Go to the project's Documents_deprecated tab to select indexes from your organization's LlamaCloud connection.
               </p>
             </div>
           </div>

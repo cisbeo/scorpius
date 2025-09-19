@@ -1,0 +1,121 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Tender Upload API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/tenders/upload": {
+      "post": {
+        "summary": "Upload documents DCE pour analyse",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "maxItems": 10
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+$"
+                  },
+                  "analysisName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "required": ["files", "projectId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload réussi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "uploadId": {
+                          "type": "string"
+                        },
+                        "documents": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "fileName": {
+                                "type": "string"
+                              },
+                              "fileSize": {
+                                "type": "number"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": ["PENDING", "PROCESSING"]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["INVALID_FILE_TYPE", "FILE_TOO_LARGE", "TOO_MANY_FILES"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

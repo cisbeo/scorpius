@@ -16,7 +16,7 @@ export function DocumentsSection({ projectId: propProjectId }: DocumentsSectionP
   if (!projectId) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold">Documents</h2>
+        <h2 className="text-2xl font-bold">Documents_deprecated</h2>
         <div className="text-center py-8">
           <p className="text-muted-foreground">No project selected</p>
         </div>

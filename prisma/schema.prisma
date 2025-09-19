@@ -87,8 +87,10 @@ model Project {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   projectIndexes ProjectIndex[]
   
-  // NOUVEAU: Relation vers AO français
-  frenchTenders  FrenchTender[]
+  // NOUVEAU: Relations analyseur DCE français
+  frenchTenders    FrenchTender[]
+  tenderDocuments  TenderDocument[]
+  tenderAnalyses   TenderAnalysis[]
 
   @@index([organizationId])
   @@map("projects")
@@ -557,4 +559,224 @@ enum ResponseStrategy {
   BALANCED         // Équilibre prix/marge optimal
   PREMIUM          // Prix élevé avec forte marge (clients fidèles)
   STRATEGIC        // Prix stratégique (accepter perte pour gain futur)
+}
+
+// ==========================================
+// NOUVEAUX MODÈLES - ANALYSEUR DCE FRANÇAIS
+// ==========================================
+
+// Document DCE uploadé avec métadonnées et statut de traitement
+model TenderDocument {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Métadonnées fichier
+  fileName    String
+  fileSize    Int
+  fileType    DocumentFileType
+  uploadedAt  DateTime @default(now())
+  uploadedBy  String
+
+  // Statut et classification
+  status         DocumentStatus
+  documentType   DocumentType
+  classification Json           // Résultats classification IA
+
+  // Timestamps traitement
+  processingStartedAt   DateTime?
+  processingCompletedAt DateTime?
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  
+  sections  TenderSection[]
+  analyses  TenderDocumentAnalysis[]
+
+  // Index performance
+  @@index([projectId, status])
+  @@index([documentType])
+  @@map("tender_documents")
+}
+
+// Résultats complets de l'analyse IA d'un ou plusieurs documents DCE
+model TenderAnalysis {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Métadonnées analyse
+  analysisName     String
+  status           DocumentStatus @default(PENDING)
+  complexityScore  Int    // 1-10
+  overallConfidence Float // 0-1
+
+  // Données extraites
+  marketScope          Json      // Objet marché extrait
+  technicalRequirements Json     // Exigences techniques structurées
+  evaluationCriteria    Json     // Critères jugement
+  timeConstraints       Json     // Contraintes temporelles
+  mandatoryRequirements String[] // Exigences obligatoires
+
+  // Métadonnées completion
+  analysisCompletedAt      DateTime?
+  estimatedPreparationDays Int?
+  errorMessage             String? // Message d'erreur si analyse échoue
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  
+  documents      TenderDocumentAnalysis[]
+  recommendations AntaresRecommendation[]
+  reports        AnalysisReport[]
+
+  // Index performance
+  @@index([projectId])
+  @@index([complexityScore])
+  @@map("tender_analyses")
+}
+
+// Table de liaison pour documents analysés dans une analyse
+model TenderDocumentAnalysis {
+  id String @id @default(cuid())
+
+  document   TenderDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId String
+  
+  analysis   TenderAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysisId String
+
+  @@unique([documentId, analysisId])
+  @@map("tender_document_analyses")
+}
+
+// Section extraite et analysée d'un document DCE
+model TenderSection {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Classification section
+  sectionType SectionType
+  title       String
+  content     String @db.Text
+  
+  // Données structurées extraites
+  structuredData Json
+  confidence     Float   // 0-1
+  pageNumbers    Int[]
+  extractedAt    DateTime @default(now())
+
+  // Relations
+  document   TenderDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId String
+
+  // Index performance
+  @@index([documentId])
+  @@index([sectionType])
+  @@map("tender_sections")
+}
+
+// Recommandations stratégiques et services Antares pertinents
+model AntaresRecommendation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Classification recommandation
+  recommendationType RecommendationType
+  title              String
+  description        String @db.Text
+  relevanceScore     Float   // 0-1
+
+  // Détails business
+  antaresServices String[] // IDs services catalogue
+  estimatedEffort Int?     // jours-homme
+  estimatedValue  Decimal? // euros
+  riskLevel       RiskLevel
+  actionable      Boolean  @default(true)
+
+  // Relations
+  analysis   TenderAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysisId String
+
+  // Index performance
+  @@index([analysisId])
+  @@index([recommendationType])
+  @@map("antares_recommendations")
+}
+
+// Rapport d'analyse exportable en PDF
+model AnalysisReport {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Métadonnées rapport
+  reportTitle    String
+  generatedAt    DateTime @default(now())
+  generatedBy    String
+  reportSections Json
+
+  // Fichier généré
+  pdfUrl    String?
+  isPublic  Boolean   @default(false)
+  expiresAt DateTime? // RGPD - expiration automatique
+
+  // Relations
+  analysis   TenderAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysisId String
+
+  // Index performance
+  @@index([analysisId])
+  @@index([generatedBy])
+  @@index([expiresAt])
+  @@map("analysis_reports")
+}
+
+// ==========================================
+// ENUMS ANALYSEUR DCE
+// ==========================================
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  ANALYZED
+  ERROR
+}
+
+enum DocumentFileType {
+  PDF
+  DOC
+  DOCX
+}
+
+enum DocumentType {
+  DCE_COMPLETE
+  CCTP
+  CCP
+  BPU
+  RC
+  OTHER
+}
+
+enum SectionType {
+  CCTP
+  CCP
+  BPU
+  RC
+  ANNEXE
+  OTHER
+}
+
+enum RecommendationType {
+  SERVICE_MATCH
+  STRATEGY
+  RISK
+  OPPORTUNITY
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
 }
