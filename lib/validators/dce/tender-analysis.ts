@@ -24,22 +24,22 @@ export const TenderAnalysisResultsSchema = z.object({
   success: z.boolean(),
   data: z.object({
     analysisId: z.string(),
-    status: z.enum(['PROCESSING', 'COMPLETED', 'ERROR']),
+    status: z.enum(['PROCESSING', 'COMPLETED', 'ERROR', 'ANALYZED']),
     
     // Métadonnées analyse
     analysisName: z.string(),
     complexityScore: z.number().min(1).max(10),
     overallConfidence: z.number().min(0).max(1),
-    analysisCompletedAt: z.date().optional(),
-    estimatedPreparationDays: z.number().positive().optional(),
+    analysisCompletedAt: z.date().nullable(),
+    estimatedPreparationDays: z.number().positive().nullable(),
     
     // Contenu extrait
     marketScope: z.object({
       title: z.string(),
       description: z.string(),
       sector: z.enum(['INFRASTRUCTURE', 'DEVELOPMENT', 'CYBERSECURITY', 'MIXED']),
-      estimatedValue: z.number().optional(),
-      contractingAuthority: z.string().optional()
+      estimatedValue: z.number().nullable(),
+      contractingAuthority: z.string().nullable()
     }).optional(),
     
     technicalRequirements: z.array(z.object({
@@ -51,15 +51,15 @@ export const TenderAnalysisResultsSchema = z.object({
     })).optional(),
     
     evaluationCriteria: z.object({
-      technical: z.number().min(0).max(100).optional(),
-      financial: z.number().min(0).max(100).optional(),
-      other: z.number().min(0).max(100).optional(),
-      details: z.record(z.any()).optional()
+      technical: z.number().min(0).max(100).nullable(),
+      financial: z.number().min(0).max(100).nullable(),
+      other: z.number().min(0).max(100).nullable(),
+      details: z.union([z.string(), z.record(z.any())]).nullable()
     }).optional(),
     
     timeConstraints: z.object({
       submissionDeadline: z.date().optional(),
-      projectDuration: z.number().optional(), // en mois
+      projectDuration: z.number().nullable(), // en mois
       keyMilestones: z.array(z.object({
         name: z.string(),
         date: z.date(),

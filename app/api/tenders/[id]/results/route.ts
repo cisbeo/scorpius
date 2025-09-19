@@ -42,6 +42,16 @@ export async function GET(
       orderBy: { relevanceScore: 'desc' }
     })
 
+    // Debug: log what we got from database
+    console.log('Raw analysis from DB:', JSON.stringify({
+      id: analysis.id,
+      marketScope: analysis.marketScope,
+      technicalRequirements: analysis.technicalRequirements,
+      evaluationCriteria: analysis.evaluationCriteria,
+      timeConstraints: analysis.timeConstraints,
+      mandatoryRequirements: analysis.mandatoryRequirements
+    }, null, 2))
+
     // Prepare response data
     const responseData = {
       success: true,

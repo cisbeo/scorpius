@@ -716,7 +716,6 @@ export class AntaresRecommenderService {
           estimatedValue: rec.estimatedValue,
           riskLevel: rec.riskLevel,
           actionable: rec.actionable,
-          reasoning: rec.reasoning,
           analysisId
         }
       })

@@ -139,13 +139,18 @@ export class TenderAnalysisService {
       throw new Error(`Analyse non trouvée: ${id}`)
     }
 
-    return await prisma.tenderAnalysis.update({
+    console.log(`Updating analysis ${id} with data:`, JSON.stringify(data, null, 2))
+
+    const result = await prisma.tenderAnalysis.update({
       where: { id },
       data: {
         ...data,
         updatedAt: new Date()
       }
     })
+    
+    console.log(`Analysis ${id} updated successfully in database`)
+    return result
   }
 
   /**
