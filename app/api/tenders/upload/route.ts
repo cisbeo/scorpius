@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { TenderUploadRequestSchema, TenderUploadResponseSchema } from '@/lib/validators/dce/tender-upload'
 import { TenderDocumentService } from '@/lib/services/french-tender/tender-document.service'
 import { DCEClassifierService } from '@/lib/services/french-tender/dce-classifier.service'
-import { DCEExtractorService } from '@/lib/services/french-tender/dce-extractor.service'
+import { LlamaCloudExtractorService } from '@/lib/services/french-tender/llamacloud-extractor.service'
+import { FileStorageService } from '@/lib/services/french-tender/file-storage.service'
 
 const documentService = new TenderDocumentService()
 const classifierService = new DCEClassifierService()
-const extractorService = new DCEExtractorService()
+const llamaExtractorService = new LlamaCloudExtractorService()
+const fileStorageService = new FileStorageService()
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,30 +40,59 @@ export async function POST(request: NextRequest) {
 
     for (const file of files) {
       try {
-        // In a real implementation, you would:
-        // 1. Store the actual file to a storage service (S3, etc.)
-        // 2. Extract content using the DCEExtractorService
-        // 3. Classify the document using DCEClassifierService
+        console.log(`Processing file: ${file.name} (${file.size} bytes)`)
+        console.log(`File object structure:`, Object.keys(file))
+        console.log(`File content type:`, typeof file.content)
+        console.log(`File content exists:`, !!file.content)
+
+        // Check if file has content property
+        if (!file.content) {
+          throw new Error(`Fichier ${file.name}: contenu manquant ou invalide`)
+        }
+
+        // 1. Convert base64 to buffer (files come as base64 from frontend)
+        let base64Data: string
+        if (file.content.includes(',')) {
+          // Remove data:mime;base64, prefix if present
+          base64Data = file.content.split(',')[1]
+        } else {
+          // Content is already base64 without prefix
+          base64Data = file.content
+        }
         
-        // For now, we'll simulate the process
-        const mockFileBuffer = Buffer.from(`Mock content for ${file.name}`)
-        
-        // Extract content
-        const extractionResult = await extractorService.extractContent(
-          mockFileBuffer,
+        const fileBuffer = Buffer.from(base64Data, 'base64')
+        console.log(`Converted to buffer: ${fileBuffer.length} bytes`)
+
+        // 2. Store the actual file
+        const storedFile = await fileStorageService.storeFile(fileBuffer, file.name, file.type)
+        console.log(`File stored with ID: ${storedFile.id}`)
+
+        // 3. Extract content using LlamaCloud
+        const extractionResult = await llamaExtractorService.extractFromBuffer(
+          fileBuffer,
           file.name,
           file.type === 'application/pdf' ? 'PDF' : 
-          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'DOCX' : 'DOC'
+          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'DOCX' : 'DOC',
+          {
+            includeImages: false,
+            includeTables: true,
+            performOCR: true,
+            preserveFormatting: true,
+            language: 'fr'
+          }
         )
 
-        // Classify document
+        // Classify document using AI-powered classification
         const classificationResult = await classifierService.classifyDocument(
           file.name,
           extractionResult.content,
           file.size
         )
+        
+        console.log(`Document classified as ${classificationResult.documentType} with ${(classificationResult.confidence * 100).toFixed(1)}% confidence`)
+        console.log(`Classification reasoning: ${classificationResult.reasoning}`)
 
-        // Create document record
+        // Create document record with stored file ID
         const document = await documentService.createDocument({
           fileName: file.name,
           fileSize: file.size,
@@ -69,6 +100,7 @@ export async function POST(request: NextRequest) {
                    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'DOCX' : 'DOC',
           projectId,
           uploadedBy: userId,
+          storedFileId: storedFile.id,
           classification: {
             confidence: classificationResult.confidence,
             type: classificationResult.documentType.toLowerCase(),

@@ -1,4 +1,6 @@
 import { DocumentType } from '@prisma/client'
+import { OpenAI } from 'openai'
+import { env } from '@/lib/env'
 
 export interface ClassificationResult {
   documentType: DocumentType
@@ -27,8 +29,16 @@ export interface ClassificationFeatures {
 /**
  * Service for classifying French tender documents (DCE)
  * Specialized in identifying CCTP, CCP, BPU, RC document types
+ * Uses AI-powered classification with fallback to heuristic analysis
  */
 export class DCEClassifierService {
+  private readonly openai: OpenAI
+  
+  constructor() {
+    this.openai = new OpenAI({
+      apiKey: env.OPENAI_API_KEY
+    })
+  }
   
   private readonly documentPatterns = {
     CCTP: {
@@ -138,14 +148,123 @@ export class DCEClassifierService {
   }
 
   /**
-   * Classify a document based on its content
+   * Classify a document based on its content using AI-powered analysis
    */
   async classifyDocument(
     fileName: string,
     content: string,
     fileSize: number
   ): Promise<ClassificationResult> {
+    try {
+      // First attempt AI classification
+      const aiResult = await this.classifyWithAI(fileName, content, fileSize)
+      if (aiResult.confidence >= 0.7) {
+        return aiResult
+      }
+
+      // Fallback to heuristic classification if AI confidence is low
+      console.log(`AI classification confidence too low (${aiResult.confidence}), falling back to heuristic analysis`)
+      return await this.classifyWithHeuristics(fileName, content, fileSize)
+
+    } catch (error) {
+      console.error('AI classification failed, using heuristic fallback:', error)
+      return await this.classifyWithHeuristics(fileName, content, fileSize)
+    }
+  }
+
+  /**
+   * AI-powered document classification using OpenAI
+   */
+  private async classifyWithAI(
+    fileName: string,
+    content: string,
+    fileSize: number
+  ): Promise<ClassificationResult> {
+    // Prepare document content (truncate if too long for API)
+    const maxContentLength = 8000
+    const documentContent = content.length > maxContentLength 
+      ? content.substring(0, maxContentLength) + '...' 
+      : content
+
+    const systemPrompt = `Tu es un expert en analyse de documents de marchés publics français. Tu dois classifier des documents DCE (Dossier de Consultation des Entreprises).
+
+Types de documents à identifier :
+- CCTP (Cahier des Clauses Techniques Particulières) : spécifications techniques détaillées, méthodes d'exécution, matériaux, performances requises
+- CCP (Cahier des Clauses Particulières) : clauses administratives et contractuelles, conditions d'exécution, pénalités, délais
+- BPU (Bordereau des Prix Unitaires) : prix unitaires, décomposition des coûts, tarifs, quantités estimatives
+- RC (Règlement de Consultation) : modalités de candidature, critères de sélection, procédure de consultation
+- OTHER : si le document ne correspond à aucun type DCE standard
+
+Analyse le document et retourne un JSON avec la structure exacte suivante :
+{
+  "documentType": "CCTP|CCP|BPU|RC|OTHER",
+  "confidence": 0.95,
+  "reasoning": "Explication détaillée de la classification en français",
+  "detectedSections": ["section1", "section2"],
+  "technicalKeywords": ["mot-clé1", "mot-clé2"],
+  "administrativeKeywords": ["mot-clé3", "mot-clé4"],
+  "priceIndicators": ["indicateur1", "indicateur2"]
+}`
+
+    const userPrompt = `Nom du fichier : ${fileName}
+Taille du fichier : ${fileSize} octets
+
+Contenu du document :
+${documentContent}
+
+Analyse ce document et fournis la classification JSON.`
+
+    const completion = await this.openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.1,
+      max_tokens: 1000
+    })
+
+    const response = completion.choices[0]?.message?.content
+    if (!response) {
+      throw new Error('Pas de réponse de l\'IA pour la classification')
+    }
+
+    // Parse AI response (remove markdown code blocks if present)
+    let cleanResponse = response.trim()
+    if (cleanResponse.startsWith('```json')) {
+      cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+    }
+    if (cleanResponse.startsWith('```')) {
+      cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '')
+    }
     
+    const aiAnalysis = JSON.parse(cleanResponse)
+    
+    // Extract additional features for metadata
+    const features = this.extractFeatures(content)
+
+    return {
+      documentType: aiAnalysis.documentType as DocumentType,
+      confidence: aiAnalysis.confidence,
+      reasoning: aiAnalysis.reasoning,
+      detectedSections: aiAnalysis.detectedSections || features.sectionTitles,
+      metadata: {
+        language: this.detectLanguage(content),
+        pageEstimate: this.estimatePageCount(content, fileSize),
+        structureScore: this.calculateStructureScore(features),
+        contentDensity: this.calculateContentDensity(content)
+      }
+    }
+  }
+
+  /**
+   * Heuristic classification fallback method
+   */
+  private async classifyWithHeuristics(
+    fileName: string,
+    content: string,
+    fileSize: number
+  ): Promise<ClassificationResult> {
     // Extract features from the document
     const features = this.extractFeatures(content)
     
@@ -518,6 +637,122 @@ export class DCEClassifierService {
     )
     
     return results
+  }
+
+  /**
+   * Enhanced classification with AI-generated document insights
+   */
+  async classifyWithInsights(
+    fileName: string,
+    content: string,
+    fileSize: number
+  ): Promise<ClassificationResult & { insights: string[], qualityScore: number }> {
+    const baseResult = await this.classifyDocument(fileName, content, fileSize)
+
+    try {
+      // Generate additional insights using AI
+      const insights = await this.generateDocumentInsights(fileName, content, baseResult.documentType)
+      const qualityScore = await this.assessDocumentQuality(content, baseResult.documentType)
+
+      return {
+        ...baseResult,
+        insights,
+        qualityScore
+      }
+    } catch (error) {
+      console.error('Failed to generate insights:', error)
+      return {
+        ...baseResult,
+        insights: [],
+        qualityScore: 0.5
+      }
+    }
+  }
+
+  /**
+   * Generate AI-powered document insights
+   */
+  private async generateDocumentInsights(
+    fileName: string,
+    content: string,
+    documentType: DocumentType
+  ): Promise<string[]> {
+    const maxContentLength = 6000
+    const documentContent = content.length > maxContentLength 
+      ? content.substring(0, maxContentLength) + '...' 
+      : content
+
+    const systemPrompt = `Tu es un expert consultant en marchés publics français. Analyse ce document ${documentType} et fournis des insights pratiques pour aider une entreprise à mieux comprendre les exigences.
+
+Retourne un JSON avec un tableau d'insights de 3-5 observations importantes :
+{
+  "insights": [
+    "Insight 1 sur les exigences techniques spécifiques",
+    "Insight 2 sur les contraintes administratives",
+    "Insight 3 sur les opportunités ou risques identifiés"
+  ]
+}`
+
+    const userPrompt = `Document : ${fileName}
+Type : ${documentType}
+
+Contenu :
+${documentContent}
+
+Fournis des insights pratiques en JSON.`
+
+    const completion = await this.openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.2,
+      max_tokens: 500
+    })
+
+    const response = completion.choices[0]?.message?.content
+    if (!response) {
+      return []
+    }
+
+    const analysis = JSON.parse(response)
+    return analysis.insights || []
+  }
+
+  /**
+   * Assess document quality and completeness
+   */
+  private async assessDocumentQuality(content: string, documentType: DocumentType): Promise<number> {
+    const features = this.extractFeatures(content)
+    let qualityScore = 0.5
+
+    // Base quality assessment
+    if (features.hasTableOfContents) qualityScore += 0.1
+    if (features.hasArticleNumbers) qualityScore += 0.1
+    if (features.sectionTitles.length > 5) qualityScore += 0.1
+    if (features.sectionTitles.length > 10) qualityScore += 0.1
+
+    // Document type specific quality checks
+    switch (documentType) {
+      case DocumentType.CCTP:
+        if (features.hasTechnicalSpecs) qualityScore += 0.1
+        if (features.hasPerformanceRequirements) qualityScore += 0.1
+        break
+      case DocumentType.BPU:
+        if (features.hasPriceSchedule) qualityScore += 0.2
+        break
+      case DocumentType.CCP:
+      case DocumentType.RC:
+        if (features.hasLegalClauses) qualityScore += 0.1
+        break
+    }
+
+    // Content density and structure
+    const contentDensity = this.calculateContentDensity(content)
+    qualityScore += contentDensity * 0.2
+
+    return Math.min(1.0, qualityScore)
   }
 
   /**

@@ -19,6 +19,9 @@ interface FileWithPreview {
   type: string
   lastModified: number
   
+  // File content
+  content?: string // base64 content
+  
   // Additional properties
   preview?: string
   id: string
@@ -81,25 +84,45 @@ export function TenderUpload({ projectId, onUploadComplete, onUploadError }: Ten
     return errors
   }, [])
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const errors = validateFiles(acceptedFiles)
     setValidationErrors(errors)
     
     if (errors.length === 0) {
-      const newFiles: FileWithPreview[] = acceptedFiles.map(file => ({
-        // File properties
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-        
-        // Additional properties
-        id: `${file.name}-${Date.now()}-${Math.random()}`,
-        status: 'pending' as const,
-        progress: 0
-      }))
+      // Read file contents as base64
+      const filePromises = acceptedFiles.map(async (file) => {
+        return new Promise<FileWithPreview>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            const result = reader.result as string
+            resolve({
+              // File properties
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              lastModified: file.lastModified,
+              
+              // File content as base64
+              content: result, // This includes the data:mime;base64, prefix
+              
+              // Additional properties
+              id: `${file.name}-${Date.now()}-${Math.random()}`,
+              status: 'pending' as const,
+              progress: 0
+            })
+          }
+          reader.onerror = () => reject(new Error(`Erreur lors de la lecture du fichier ${file.name}`))
+          reader.readAsDataURL(file)
+        })
+      })
       
-      setFiles(prev => [...prev, ...newFiles])
+      try {
+        const newFiles = await Promise.all(filePromises)
+        setFiles(prev => [...prev, ...newFiles])
+      } catch (error) {
+        console.error('Erreur lors de la lecture des fichiers:', error)
+        setValidationErrors(['Erreur lors de la lecture des fichiers'])
+      }
     }
   }, [validateFiles])
 
@@ -139,7 +162,8 @@ export function TenderUpload({ projectId, onUploadComplete, onUploadError }: Ten
       files: files.map(f => ({
         name: f.name,
         size: f.size,
-        type: f.type
+        type: f.type,
+        content: f.content || ''
       })),
       projectId,
       analysisName: analysisName.trim()

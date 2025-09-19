@@ -665,6 +665,17 @@ export class AntaresRecommenderService {
   }
 
   private calculateSummary(recommendations: RecommendationResult['recommendations']): RecommendationResult['summary'] {
+    // Handle empty recommendations array
+    if (recommendations.length === 0) {
+      return {
+        totalRecommendations: 0,
+        highRelevanceCount: 0,
+        totalEstimatedValue: 0,
+        averageRiskLevel: 'LOW',
+        primaryApproach: 'OPTIMIZATION'
+      }
+    }
+
     const highRelevanceCount = recommendations.filter(r => r.relevanceScore > 0.8).length
     const totalValue = recommendations.reduce((sum, r) => sum + r.estimatedValue, 0)
     
@@ -673,12 +684,14 @@ export class AntaresRecommenderService {
       return acc
     }, {} as Record<string, number>)
     
-    const avgRisk = Object.entries(riskCounts).reduce((a, b) => 
-      riskCounts[a[0]] > riskCounts[b[0]] ? a : b
-    )[0]
+    const avgRisk = Object.entries(riskCounts).length > 0 
+      ? Object.entries(riskCounts).reduce((a, b) => 
+          riskCounts[a[0]] > riskCounts[b[0]] ? a : b
+        )[0]
+      : 'LOW'
 
     const typeCounts = recommendations.reduce((acc, r) => {
-      acc[r.type] = (acc[r.type] || 0) + 1
+      acc[r.recommendationType] = (acc[r.recommendationType] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     

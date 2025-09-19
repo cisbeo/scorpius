@@ -572,11 +572,12 @@ model TenderDocument {
   updatedAt DateTime @updatedAt
 
   // Métadonnées fichier
-  fileName    String
-  fileSize    Int
-  fileType    DocumentFileType
-  uploadedAt  DateTime @default(now())
-  uploadedBy  String
+  fileName     String
+  fileSize     Int
+  fileType     DocumentFileType
+  uploadedAt   DateTime @default(now())
+  uploadedBy   String
+  storedFileId String?  // ID du fichier stocké physiquement
 
   // Statut et classification
   status         DocumentStatus

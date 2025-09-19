@@ -63,7 +63,7 @@ export const TenderAnalysisResultsSchema = z.object({
       keyMilestones: z.array(z.object({
         name: z.string(),
         date: z.date(),
-        description: z.string().optional()
+        description: z.string().nullable()
       })).optional()
     }).optional(),
     

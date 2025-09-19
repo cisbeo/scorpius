@@ -10,6 +10,7 @@ export interface CreateTenderDocumentData {
   projectId: string
   uploadedBy: string
   classification?: Record<string, any>
+  storedFileId?: string
 }
 
 export interface UpdateTenderDocumentData {
@@ -18,6 +19,7 @@ export interface UpdateTenderDocumentData {
   classification?: Record<string, any>
   processingStartedAt?: Date
   processingCompletedAt?: Date
+  storedFileId?: string
 }
 
 export interface TenderDocumentFilters {
@@ -53,7 +55,8 @@ export class TenderDocumentService {
         documentType,
         classification: data.classification || {},
         projectId: data.projectId,
-        uploadedBy: data.uploadedBy
+        uploadedBy: data.uploadedBy,
+        storedFileId: data.storedFileId
       }
     })
   }

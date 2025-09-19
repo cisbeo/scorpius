@@ -11,7 +11,8 @@ export const TenderUploadRequestSchema = z.object({
     type: z.string().refine(
       (type) => ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(type),
       'Format de fichier non supporté. Formats acceptés: PDF, DOC, DOCX'
-    )
+    ),
+    content: z.string().min(1, 'Le contenu du fichier est requis (base64)')
   })).min(1, 'Au moins un fichier est requis').max(10, 'Maximum 10 fichiers par upload'),
   
   projectId: z.string().cuid('ID projet invalide'),
